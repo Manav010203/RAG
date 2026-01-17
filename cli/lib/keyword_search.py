@@ -10,6 +10,7 @@ from .search_utils import (
     DEFAULT_SEARCH_LIMIT,
     load_movies,
     load_stopwords,
+    
 )
 
 
@@ -43,27 +44,48 @@ class InvertedIndex:
         tokens = tokenize_text(text)
         for token in set(tokens):
             self.index[token].add(doc_id)
-
+    def load(self)->None:
+        if not os.path.exists(self.index_path) or not os.path.exists(self.docmap_path):
+            raise FileNotFoundError("Index or docmap not existed")
+        with open(self.index_path, "rb") as f:
+            self.index = defaultdict(set,pickle.load(f))
+        with open(self.docmap_path,"rb") as f:
+            self.docmap = defaultdict(set,pickle.load(f))
+        
 
 def build_command() -> None:
     idx = InvertedIndex()
     idx.build()
     idx.save()
-    docs = idx.get_documents("merida")
-    print(f"First document for token 'merida' = {docs[0]}")
+    # docs = idx.get_documents("")
+    # print(f"First document for token 'merida' = {docs[0]}")
 
 
 def search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
-    movies = load_movies()
-    results = []
-    for movie in movies:
-        query_tokens = tokenize_text(query)
-        title_tokens = tokenize_text(movie["title"])
-        if has_matching_token(query_tokens, title_tokens):
-            results.append(movie)
-            if len(results) >= limit:
-                break
+    index = InvertedIndex()
 
+    try:
+        index.load()
+    except FileNotFoundError:
+        print("Error: index not found please run the build command")
+        return []
+    results = []
+    seen = set()
+
+    query_token = tokenize_text(query)
+
+    for token in query_token:
+        doc_ids = index.get_documents(token)
+
+        for doc_id in doc_ids:
+            if doc_id not in seen:
+                seen.add(doc_id)
+                movie = index.docmap[doc_id]
+                print(f"{movie['title']} (ID: {doc_id})")
+                results.append(movie)
+
+                if len(results)>=limit:
+                    return results
     return results
 
 
