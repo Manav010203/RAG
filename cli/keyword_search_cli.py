@@ -52,16 +52,16 @@ def main() -> None:
             idf = math.log((len(index.docmap)+1) / (occ+1))
             # print(idf)
             print(f"Inverse document frequency of '{args.term}': {idf:.2f}")
-        # case "tfidf":
-        #     term = args.term
-        #     doc_id = args.doc_id
-        #     index = InvertedIndex()
-        #     index.load()
-        #     tf = index.get_tf(args.doc_id, args.term)
-        #     occ = index.get_idf(term)
-        #     idf = math.log((len(index.docmap)+1) / (occ+1))
-        #     tf_idf = tf * idf
-        #     print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
+        case "tfidf":
+            term = args.term
+            doc_id = args.doc_id
+            index = InvertedIndex()
+            index.load()
+            tf = index.get_tf(args.doc_id, args.term)
+            occ = index.get_idf(term)
+            idf = math.log((len(index.docmap)+1) / (occ+1))
+            tf_idf = tf * idf
+            print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
 
         case _:
             parser.print_help()
