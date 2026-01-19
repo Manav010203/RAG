@@ -34,11 +34,11 @@ class InvertedIndex:
     def save(self) -> None:
         os.makedirs(CACHE_DIR, exist_ok=True)
         with open(self.index_path, "wb") as f:
-            pickle.dump(self.index, f)
+            pickle.dump(dict(self.index), f)
         with open(self.docmap_path, "wb") as f:
             pickle.dump(self.docmap, f)
-        with open(self.term_frequencies, "wb") as f:
-            pickle.dump(self.term_frequencies_path.f)
+        with open(self.term_frequencies_path, "wb") as f:
+            pickle.dump(dict(self.term_frequencies),f)
 
     def get_documents(self, term: str) -> list[int]:
         doc_ids = self.index.get(term, set())
@@ -46,24 +46,37 @@ class InvertedIndex:
 
     def __add_document(self, doc_id: int, text: str) -> None:
         tokens = tokenize_text(text)
-        for token in set(tokens):
+        for token in tokens:
             self.index[token].add(doc_id)
             self.term_frequencies[doc_id][token]+=1
     def load(self)->None:
-        if not os.path.exists(self.index_path) or not os.path.exists(self.docmap_path) or not os.path.exists(self.term_frequencies_path):
-            raise FileNotFoundError("Index or docmap not existed")
+        # if not os.path.exists(self.index_path) or not os.path.exists(self.docmap_path) or not os.path.exists(self.term_frequencies_path):
+        #     raise FileNotFoundError("Index or docmap or  not existed")
         with open(self.index_path, "rb") as f:
-            self.index = defaultdict(set,pickle.load(f))
+            # self.index = pickle.load(f)
+            self.index = defaultdict(set, pickle.load(f))
+
         with open(self.docmap_path,"rb") as f:
-            self.docmap = defaultdict(set,pickle.load(f))
-        with open(self.term_frequencies,"rb") as f:
-            self.term_frequencies = defaultdict(set,pickle.load(f))
+            self.docmap = pickle.load(f)
+        with open(self.term_frequencies_path,"rb") as f:
+            self.term_frequencies = defaultdict(Counter,pickle.load(f))
     def get_tf(self,doc_id,term):
         tokens = tokenize_text(term)
         if len(tokens)!=1:
             raise ValueError("get_tf except only one token at a time")
         token = tokens[0]
-        return self.term_frequencies[doc_id][token]
+        # return self.term_frequencies[doc_id][token]
+        return self.term_frequencies.get(doc_id, Counter()).get(token, 0)
+    def get_idf(self,term):
+        tokens = tokenize_text(term)
+        if(len(tokens)!=1):
+            raise ValueError("term is big in length")
+        token = tokens[0]
+        occurence = 0
+        for id in self.docmap:
+            if self.term_frequencies[id][token]:
+                occurence+=1
+        return occurence
 def build_command() -> None:
     idx = InvertedIndex()
     idx.build()
@@ -71,32 +84,22 @@ def build_command() -> None:
     # docs = idx.get_documents("")
     # print(f"First document for token 'merida' = {docs[0]}")
 
-
 def search_command(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> list[dict]:
-    index = InvertedIndex()
+    idx = InvertedIndex()
+    idx.load()
+    query_tokens = tokenize_text(query)
+    seen, results = set(), []
+    for query_token in query_tokens:
+        matching_doc_ids = idx.get_documents(query_token)
+        for doc_id in matching_doc_ids:
+            if doc_id in seen:
+                continue
+            seen.add(doc_id)
+            doc = idx.docmap[doc_id]
+            results.append(doc)
+            if len(results) >= limit:
+                return results
 
-    try:
-        index.load()
-    except FileNotFoundError:
-        print("Error: index not found please run the build command")
-        return []
-    results = []
-    seen = set()
-
-    query_token = tokenize_text(query)
-
-    for token in query_token:
-        doc_ids = index.get_documents(token)
-
-        for doc_id in doc_ids:
-            if doc_id not in seen:
-                seen.add(doc_id)
-                movie = index.docmap[doc_id]
-                print(f"{movie['title']} (ID: {doc_id})")
-                results.append(movie)
-
-                if len(results)>=limit:
-                    return results
     return results
 
 
