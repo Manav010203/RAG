@@ -24,7 +24,7 @@ def main() -> None:
     idf_parser.add_argument("term",type=str,help="term for which to calculate the idf")
 
     tfidf_parser = subparsers.add_parser("tfidf",help="finding tf-idf")
-    tfidf_parser.add_argument("doc_id",type=str,help="document id")
+    tfidf_parser.add_argument("doc_id",type=int,help="document id")
     tfidf_parser.add_argument("term",type=str,help="term to find tf idf for")
 
     args = parser.parse_args()
@@ -60,7 +60,7 @@ def main() -> None:
             tf = index.get_tf(args.doc_id, args.term)
             occ = index.get_idf(term)
             idf = math.log((len(index.docmap)+1) / (occ+1))
-            tf_idf = tf * idf
+            tf_idf = tf *idf
             print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
 
         case _:
