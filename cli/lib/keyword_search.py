@@ -1,7 +1,7 @@
 import os
 import pickle
 import string
-from collections import defaultdict
+from collections import defaultdict,Counter
 
 from nltk.stem import PorterStemmer
 
@@ -18,8 +18,10 @@ class InvertedIndex:
     def __init__(self) -> None:
         self.index = defaultdict(set)
         self.docmap: dict[int, dict] = {}
+        self.term_frequencies = defaultdict(Counter)
         self.index_path = os.path.join(CACHE_DIR, "index.pkl")
         self.docmap_path = os.path.join(CACHE_DIR, "docmap.pkl")
+        self.term_frequencies_path = os.path.join(CACHE_DIR,"term_frequencies.pkl")
 
     def build(self) -> None:
         movies = load_movies()
@@ -35,6 +37,8 @@ class InvertedIndex:
             pickle.dump(self.index, f)
         with open(self.docmap_path, "wb") as f:
             pickle.dump(self.docmap, f)
+        with open(self.term_frequencies, "wb") as f:
+            pickle.dump(self.term_frequencies_path.f)
 
     def get_documents(self, term: str) -> list[int]:
         doc_ids = self.index.get(term, set())
@@ -44,15 +48,22 @@ class InvertedIndex:
         tokens = tokenize_text(text)
         for token in set(tokens):
             self.index[token].add(doc_id)
+            self.term_frequencies[doc_id][token]+=1
     def load(self)->None:
-        if not os.path.exists(self.index_path) or not os.path.exists(self.docmap_path):
+        if not os.path.exists(self.index_path) or not os.path.exists(self.docmap_path) or not os.path.exists(self.term_frequencies_path):
             raise FileNotFoundError("Index or docmap not existed")
         with open(self.index_path, "rb") as f:
             self.index = defaultdict(set,pickle.load(f))
         with open(self.docmap_path,"rb") as f:
             self.docmap = defaultdict(set,pickle.load(f))
-        
-
+        with open(self.term_frequencies,"rb") as f:
+            self.term_frequencies = defaultdict(set,pickle.load(f))
+    def get_tf(self,doc_id,term):
+        tokens = tokenize_text(term)
+        if len(tokens)!=1:
+            raise ValueError("get_tf except only one token at a time")
+        token = tokens[0]
+        return self.term_frequencies[doc_id][token]
 def build_command() -> None:
     idx = InvertedIndex()
     idx.build()

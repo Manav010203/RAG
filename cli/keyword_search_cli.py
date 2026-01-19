@@ -13,6 +13,11 @@ def main() -> None:
 
     search_parser = subparsers.add_parser("search", help="Search movies using BM25")
     search_parser.add_argument("query", type=str, help="Search query")
+    
+
+    tf_parser = subparsers.add_parser("tf", help= "Get the term frequency in particular doc")
+    tf_parser.add_argument("doc_id",type=str, help="document Id")
+    tf_parser.add_argument("term",type=str,help="term to search for")
 
     args = parser.parse_args()
 
@@ -26,6 +31,10 @@ def main() -> None:
             results = search_command(args.query)
             for i, res in enumerate(results, 1):
                 print(f"{i}. ({res['id']}) {res['title']}")
+        case "tf":
+            print("finding term frequency in the doc :", args.query)
+            results = 
+
         case _:
             parser.print_help()
 
