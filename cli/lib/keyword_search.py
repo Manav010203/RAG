@@ -1,6 +1,7 @@
 import os
 import pickle
 import string
+import math
 from collections import defaultdict,Counter
 
 from nltk.stem import PorterStemmer
@@ -77,6 +78,19 @@ class InvertedIndex:
             if self.term_frequencies[id][token]:
                 occurence+=1
         return occurence
+    def get_bm25_idf(self,term:str):
+        tokens = tokenize_text(term)
+        if len(tokens)!=1:
+            raise ValueError("only single term required")
+        token = tokens[0]
+        N = len(self.docmap)
+        df = 0
+        for id in self.docmap:
+            if self.term_frequencies[id][token]:
+                df+=1
+        bm25_idf = math.log((N-df+0.5)/(df+0/5)+1)
+        return bm25_idf
+        
 def build_command() -> None:
     idx = InvertedIndex()
     idx.build()
