@@ -3,7 +3,7 @@
 import argparse
 import math
 
-from lib.keyword_search import build_command, search_command,InvertedIndex
+from lib.keyword_search import build_command, search_command,InvertedIndex,bm25_idf_command
 
 
 def main() -> None:
@@ -27,6 +27,8 @@ def main() -> None:
     tfidf_parser.add_argument("doc_id",type=int,help="document id")
     tfidf_parser.add_argument("term",type=str,help="term to find tf idf for")
 
+    bm25_idf_parser = subparsers.add_parser("bm25idf",help="get BM25 IDF score for a given term")
+    bm25_idf_parser.add_argument("term",type=str,help="Term to get BM25 IDF for")
     args = parser.parse_args()
     
     match args.command:
@@ -62,7 +64,10 @@ def main() -> None:
             idf = math.log((len(index.docmap)+1) / (occ+1))
             tf_idf = tf *idf
             print(f"TF-IDF score of '{args.term}' in document '{args.doc_id}': {tf_idf:.2f}")
-
+        case "bm25idf":
+            term =args.term
+            bm25idf = bm25_idf_command(term)
+            print(f"BM25 IDF score of '{args.term}': {bm25idf:.2f}")
         case _:
             parser.print_help()
 
