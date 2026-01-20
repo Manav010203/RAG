@@ -88,7 +88,7 @@ class InvertedIndex:
         for id in self.docmap:
             if self.term_frequencies[id][token]:
                 df+=1
-        bm25_idf = math.log((N-df+0.5)/(df+0/5)+1)
+        bm25_idf = math.log((N-df+0.5)/(df+0.5)+1)
         return bm25_idf
 
 
