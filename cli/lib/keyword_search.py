@@ -2,6 +2,7 @@ import os
 import pickle
 import string
 import math
+import operator
 from collections import defaultdict,Counter
 
 from nltk.stem import PorterStemmer
@@ -11,10 +12,10 @@ from .search_utils import (
     DEFAULT_SEARCH_LIMIT,
     load_movies,
     load_stopwords,
-    
+    BM25_B,
+    BM25_k1
 )
-BM25_k1 = 1.5
-BM25_B = 0.75
+
 
 class InvertedIndex:
     def __init__(self) -> None:
@@ -97,7 +98,7 @@ class InvertedIndex:
                 df+=1
         bm25_idf = math.log((N-df+0.5)/(df+0.5)+1)
         return bm25_idf
-    def get_bm25_tf(self,doc_id,term,K1=BM25_k1,b=BM25_B):
+    def get_bm25_tf(self,doc_id,term,K1: float = BM25_k1, b: float = BM25_B):
         freq = self.get_tf(doc_id,term)
         len_norm = 1-b +b*(self.doc_lengths[doc_id]/self.__get_avg_doc_length())
         res = (freq * (K1 +1)) / (freq + K1*len_norm)
@@ -107,7 +108,24 @@ class InvertedIndex:
         if not self.doc_lengths:
             return 0.0
         return sum(self.doc_lengths.values()) / len(self.doc_lengths)+1
-
+    def bm25(self,doc_id,term):
+        bm25_tf = self.get_bm25_tf(doc_id,term,BM25_k1,BM25_B)
+        bm25_idf = self.get_bm25_idf(term)
+        bm25_score = bm25_idf * bm25_tf
+        return bm25_score
+    def bm25_search(self,query,limit):
+        tokens = tokenize_text(query)
+        scores = defaultdict(float)
+        for doc_id in self.docmap:
+            total_score = 0.0
+            for token in tokens:
+                tf_score = self.get_bm25_tf(doc_id,token)
+                idf_score = self.get_bm25_idf(token)
+                total_score += tf_score * idf_score
+            if total_score > 0:
+                scores[doc_id] = total_score
+        ranked = sorted(scores.items(),key=lambda x : x[1],reverse=True)
+        return ranked[:limit]
 def bm25_tf_command(doc_id,term,k1=BM25_k1,b=BM25_B):
     index = InvertedIndex()
     index.load()
