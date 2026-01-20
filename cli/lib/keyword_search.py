@@ -13,7 +13,7 @@ from .search_utils import (
     load_stopwords,
     
 )
-
+BM25_k1 = 1.5
 
 class InvertedIndex:
     def __init__(self) -> None:
@@ -90,7 +90,15 @@ class InvertedIndex:
                 df+=1
         bm25_idf = math.log((N-df+0.5)/(df+0.5)+1)
         return bm25_idf
-
+    def get_bm25_tf(self,doc_id,term,K1=BM25_k1):
+        freq = self.get_tf(doc_id,term)
+        res = (freq * (K1 +1)) / (freq + K1)
+        return res
+def bm25_tf_command(doc_id,term,k1=BM25_k1):
+    index = InvertedIndex()
+    index.load()
+    res = index.get_bm25_tf(doc_id,term,k1)
+    return res
 
 def bm25_idf_command(term:str)-> None:
     index = InvertedIndex()
