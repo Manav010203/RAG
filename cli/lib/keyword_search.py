@@ -90,7 +90,13 @@ class InvertedIndex:
                 df+=1
         bm25_idf = math.log((N-df+0.5)/(df+0/5)+1)
         return bm25_idf
-        
+
+
+def bm25_idf_command(term:str)-> None:
+    index = InvertedIndex()
+    index.load()
+    res = index.get_bm25_idf(term)
+    return res 
 def build_command() -> None:
     idx = InvertedIndex()
     idx.build()
