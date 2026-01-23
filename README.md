@@ -1,2 +1,2 @@
 # RAG
-Learning RAG from different resources main is the Boot.dev
+Learning RAG from different resources main is the Boot.dev.
