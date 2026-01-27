@@ -2,7 +2,7 @@ import os
 import pickle
 import string
 import math
-import operator
+# import operator
 from collections import defaultdict,Counter
 
 from nltk.stem import PorterStemmer
